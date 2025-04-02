@@ -2,6 +2,6 @@ main:
   params: [event]
   steps:
     - send_sms:
-        call: http.post(f"https://${sys.location}-${sys.project_id}.cloudfunctions.net/send_sms", json: ${event})
+        call: http.post(f"https://${sys.location}-${sys.project_id}.cloudfunctions.net/send_sms", json: '${event}')
     - send_email:
-        call: http.post(f"https://${sys.location}-${sys.project_id}.cloudfunctions.net/send_email", json: ${event})
+        call: http.post(f"https://${sys.location}-${sys.project_id}.cloudfunctions.net/send_email", json: '${event}')

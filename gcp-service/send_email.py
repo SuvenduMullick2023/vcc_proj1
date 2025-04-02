@@ -9,6 +9,7 @@ import json
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @functions_framework.cloud_event
 def send_email(cloud_event):
     """

@@ -7,7 +7,9 @@ from google.cloud import workflows_v1
 import logging
 import json
 import subprocess
-import send_email 
+import send_email
+from google.cloud.workflows.executions_v1 import ExecutionsClient
+from google.cloud.workflows.executions_v1.types import Execution 
 app = FastAPI()
 
 # Configure logging
@@ -85,11 +87,18 @@ async def process_data(data: dict):
         workflow_id = "m22aie218-vcc-v1"
         location = "us-central1"
 
-        client = workflows_v1.WorkflowsClient()
+        # Use ExecutionsClient instead of WorkflowsClient
+        client = ExecutionsClient()
         parent = client.workflow_path(project_id, location, workflow_id)
-        response = client.run_workflow(parent=parent, argument=json.dumps(data))
-        logger.info(f"Workflow run initiated: {response.name}")
-
+        
+        # Create execution with input data
+        execution = Execution(argument=json.dumps(data))
+        response = client.create_execution(
+            parent=parent,
+            execution=execution
+        )
+        
+        logger.info(f"Workflow execution started: {response.name}")
         return JSONResponse({"message": "Processing started."})
 
     except Exception as e:

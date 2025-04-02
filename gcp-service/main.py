@@ -67,7 +67,7 @@ def deploy_workflow_if_not_exists(workflow_id, workflow_file, location):
             raise HTTPException(status_code=500, detail=f"Failed to deploy workflow: {str(e)}")
         
 # Before running the FastAPI app:
-create_bucket_if_not_exists("GCP-VCC-m22aie218-bucket-v1")  # Replace with a unique name        
+create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1")  # Replace with a unique name        
         
 # Before running the FastAPI app:
 deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflow.yaml", "us-central1") # Replace with your values        

@@ -22,7 +22,7 @@ def send_email(cloud_event):
         # Use SendGrid to send the email
         sg = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
         mail = Mail(
-            from_email="m22aie218@iit.ac.in.com",
+            from_email="m22aie218@iitj.ac.in",
             to_emails="esuvmul@gmail.com",
             subject="Email from GCP",
             html_content=f"<strong>{message}</strong>",

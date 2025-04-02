@@ -80,18 +80,10 @@ async def process_data(data: dict):
     try:
         logger.info(f"Received data: {data}")
 
-        # Simulate data storage in Cloud Storage (you'd use the GCP client library)
-        # Example:
-        # from google.cloud import storage
-        # client = storage.Client()
-        # bucket = client.bucket("your-bucket-name")
-        # blob = bucket.blob("data.json")
-        # blob.upload_from_string(json.dumps(data))
-
         # Trigger Cloud Workflow
-        project_id = "project-1-autoscale-gcp-vm" #os.environ.get("GCP_PROJECT")
+        project_id = "project-1-autoscale-gcp-vm"
         workflow_id = "m22aie218-vcc-v1"
-        location = "us-central1"  # Replace with your workflow location
+        location = "us-central1"
 
         client = workflows_v1.WorkflowsClient()
         parent = client.workflow_path(project_id, location, workflow_id)

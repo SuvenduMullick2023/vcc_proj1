@@ -1,5 +1,8 @@
+emails
+function_framework
 fastapi
 uvicorn
 google-cloud-pubsub
 google-cloud-workflows
 sendgrid
+google-cloud-storage

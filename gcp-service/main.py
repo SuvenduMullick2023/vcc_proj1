@@ -3,13 +3,15 @@ from fastapi.responses import JSONResponse
 import functions_framework
 import os
 import google.cloud.pubsub_v1
-from google.cloud import workflows_v1
+from google.cloud import workflows_v1, logging_v2, functions_v1
 import logging
 import json
 import subprocess
 import send_email
 from google.cloud.workflows.executions_v1 import ExecutionsClient
 from google.cloud.workflows.executions_v1.types import Execution 
+from google.api_core.exceptions import GoogleAPICallError
+ 
 app = FastAPI()
 
 # Configure logging
@@ -69,11 +71,102 @@ def deploy_workflow_if_not_exists(workflow_id, workflow_file, location):
             raise HTTPException(status_code=500, detail=f"Failed to deploy workflow: {str(e)}")
         
 # Before running the FastAPI app:
-create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1")  # Replace with a unique name        
+#create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1")  # Replace with a unique name        
         
 # Before running the FastAPI app:
-deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflow.yaml", "us-central1") # Replace with your values        
+#deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflow.yaml", "us-central1") # Replace with your values        
 
+@app.get("/logs/email")
+async def get_email_logs(limit: int = 10):
+    """Retrieve email function logs programmatically"""
+    try:
+        log_filter = (
+            f'resource.type="cloud_function" '
+            f'resource.labels.function_name="send_email" '
+            f'severity>=INFO'
+        )
+
+        logs = []
+        for entry in logging_client.list_log_entries(
+            resource_names=[f"projects/{PROJECT_ID}"],
+            filter_=log_filter,
+            page_size=limit
+        ):
+            logs.append({
+                "timestamp": entry.timestamp.isoformat(),
+                "severity": entry.severity.name,
+                "message": entry.text_payload
+            })
+
+        return {"logs": logs[-limit:]}
+
+    except GoogleAPICallError as e:
+        raise HTTPException(status_code=500, detail=f"Log retrieval failed: {str(e)}")
+
+
+@app.post("/manage-permissions/email")
+async def configure_email_permissions(public_access: bool = True):
+    """Programmatically manage email function permissions"""
+    try:
+        function_path = functions_client.cloud_function_path(
+            PROJECT_ID,
+            'us-central1',
+            'send_email'
+        )
+
+        policy = functions_client.get_iam_policy(resource=function_path)
+        member = "allUsers"
+        role = "roles/cloudfunctions.invoker"
+        
+        if public_access:
+            binding = next((b for b in policy.bindings if b.role == role), None)
+            if not binding:
+                binding = functions_v1.Policy.Binding(role=role, members=[])
+                policy.bindings.append(binding)
+            if member not in binding.members:
+                binding.members.append(member)
+        else:
+            for binding in policy.bindings:
+                if binding.role == role and member in binding.members:
+                    binding.members.remove(member)
+
+        functions_client.set_iam_policy(
+            resource=function_path,
+            policy=policy
+        )
+
+        return {"status": "success", "public_access": public_access}
+
+    except GoogleAPICallError as e:
+        raise HTTPException(status_code=500, detail=f"Permission update failed: {str(e)}") 
+       
+@app.get("/logs/sms")
+async def get_sms_logs(limit: int = 10):
+    """Retrieve SMS function logs programmatically"""
+    try:
+        log_filter = (
+            f'resource.type="cloud_function" '
+            f'resource.labels.function_name="send_sms" '
+            f'severity>=INFO'
+        )
+
+        logs = []
+        for entry in logging_client.list_log_entries(
+            resource_names=[f"projects/{PROJECT_ID}"],
+            filter_=log_filter,
+            page_size=limit
+        ):
+            logs.append({
+                "timestamp": entry.timestamp.isoformat(),
+                "severity": entry.severity.name,
+                "message": entry.text_payload
+            })
+
+        return {"logs": logs[-limit:]}
+
+    except GoogleAPICallError as e:
+        raise HTTPException(status_code=500, detail=f"Log retrieval failed: {str(e)}")
+    
 @app.post("/process")
 async def process_data(data: dict):
     """
@@ -107,5 +200,8 @@ async def process_data(data: dict):
 
 # If running locally, start the FastAPI server
 if __name__ == "__main__":
+    authenticate_gcloud()
+    create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1")
+    deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflow.yaml", "us-central1")
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

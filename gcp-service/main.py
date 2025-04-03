@@ -11,25 +11,31 @@ import send_email
 from google.cloud.workflows.executions_v1 import ExecutionsClient
 from google.cloud.workflows.executions_v1.types import Execution 
 from google.api_core.exceptions import GoogleAPICallError
-from google.cloud.logging_v2 import Client as LoggingClient
-#from google.cloud import logging
+
+from google.cloud import logging as gcp_logging
+from google.cloud.logging_v2 import Client as GCPLoggingClient
 
 # Initialize logger early
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 # Add this initialization at the top level after imports
 logging_client = None
 
-# Client initialization function
 def initialize_clients():
-    global logging_client, functions_client
+    global gcp_logger_client, functions_client
     try:
-        logging_client = LoggingClient()  # Correct client initialization
+        # Initialize GCP logging client
+        gcp_logger_client = GCPLoggingClient()
+        
+        # Initialize Cloud Functions client
         functions_client = functions_v1.CloudFunctionsServiceClient()
+        
+        logger.info("GCP clients initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize GCP clients: {str(e)}")
-        raise RuntimeError("Service initialization failed")
+        raise HTTPException(status_code=500, detail="Service initialization failed")
 
 # Initialize after logger setup
 initialize_clients()
@@ -100,26 +106,27 @@ def deploy_workflow_if_not_exists(workflow_id, workflow_file, location):
 
 @app.get("/logs/email")
 async def get_email_logs(limit: int = 10):
-    """Retrieve email function logs"""
+    """Retrieve email function logs from GCP"""
     try:
-        if not logging_client:
-            raise HTTPException(status_code=500, detail="Logging client not initialized")
-            
+        if not gcp_logger_client:
+            raise HTTPException(status_code=500, detail="GCP logging client not initialized")
+
+        # Build GCP log filter
         log_filter = (
             f'resource.type="cloud_function" '
             f'resource.labels.function_name="send_email" '
             f'severity>=INFO'
         )
 
-        logs = []
-        entries = logging_client.list_log__entries(
-            request={
-                "resource_names": [f"projects/{PROJECT_ID}"],
-                "filter": log_filter,
-                "page_size": limit
-            }
+        # Get entries from GCP logging
+        entries = gcp_logger_client.list_entries(
+            filter_=log_filter,
+            resource_names=[f"projects/{PROJECT_ID}"],
+            page_size=limit
         )
-        
+
+        # Process GCP log entries
+        logs = []
         for entry in entries:
             logs.append({
                 "timestamp": entry.timestamp.isoformat(),
@@ -127,10 +134,13 @@ async def get_email_logs(limit: int = 10):
                 "message": entry.text_payload
             })
 
+        # Use standard logger for local logging
+        logger.debug(f"Retrieved {len(logs)} GCP log entries")
+        
         return {"logs": logs[-limit:]}
 
     except GoogleAPICallError as e:
-        logger.error(f"Log retrieval failed: {str(e)}")
+        logger.error(f"GCP log retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Log retrieval failed: {str(e)}")
 
 

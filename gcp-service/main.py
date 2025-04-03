@@ -11,6 +11,21 @@ import send_email
 from google.cloud.workflows.executions_v1 import ExecutionsClient
 from google.cloud.workflows.executions_v1.types import Execution 
 from google.api_core.exceptions import GoogleAPICallError
+from google.cloud import logging_v2
+
+# Add this initialization at the top level after imports
+logging_client = None
+
+def initialize_clients():
+    global logging_client, functions_client
+    try:
+        logging_client = logging_v2.LoggingServiceClient()
+        functions_client = functions_v1.CloudFunctionsServiceClient()
+    except Exception as e:
+        logger.error(f"Failed to initialize GCP clients: {str(e)}")
+        raise HTTPException(status_code=500, detail="Service initialization failed")
+# Add this before your FastAPI endpoints
+initialize_clients()
  
 app = FastAPI()
 
@@ -78,8 +93,11 @@ def deploy_workflow_if_not_exists(workflow_id, workflow_file, location):
 
 @app.get("/logs/email")
 async def get_email_logs(limit: int = 10):
-    """Retrieve email function logs programmatically"""
+    """Retrieve email function logs"""
     try:
+        if not logging_client:
+            raise HTTPException(status_code=500, detail="Logging client not initialized")
+            
         log_filter = (
             f'resource.type="cloud_function" '
             f'resource.labels.function_name="send_email" '
@@ -87,11 +105,15 @@ async def get_email_logs(limit: int = 10):
         )
 
         logs = []
-        for entry in logging_client.list_log_entries(
-            resource_names=[f"projects/{PROJECT_ID}"],
-            filter_=log_filter,
-            page_size=limit
-        ):
+        entries = logging_client.list_log__entries(
+            request={
+                "resource_names": [f"projects/{PROJECT_ID}"],
+                "filter": log_filter,
+                "page_size": limit
+            }
+        )
+        
+        for entry in entries:
             logs.append({
                 "timestamp": entry.timestamp.isoformat(),
                 "severity": entry.severity.name,
@@ -101,6 +123,7 @@ async def get_email_logs(limit: int = 10):
         return {"logs": logs[-limit:]}
 
     except GoogleAPICallError as e:
+        logger.error(f"Log retrieval failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Log retrieval failed: {str(e)}")
 
 

@@ -11,20 +11,27 @@ import send_email
 from google.cloud.workflows.executions_v1 import ExecutionsClient
 from google.cloud.workflows.executions_v1.types import Execution 
 from google.api_core.exceptions import GoogleAPICallError
-from google.cloud import logging_v2
+from google.cloud.logging_v2 import Client as LoggingClient
+from google.cloud import logging
+
+# Initialize logger early
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Add this initialization at the top level after imports
 logging_client = None
 
+# Client initialization function
 def initialize_clients():
     global logging_client, functions_client
     try:
-        logging_client = logging_v2.LoggingServiceClient()
+        logging_client = LoggingClient()  # Correct client initialization
         functions_client = functions_v1.CloudFunctionsServiceClient()
     except Exception as e:
         logger.error(f"Failed to initialize GCP clients: {str(e)}")
-        raise HTTPException(status_code=500, detail="Service initialization failed")
-# Add this before your FastAPI endpoints
+        raise RuntimeError("Service initialization failed")
+
+# Initialize after logger setup
 initialize_clients()
  
 app = FastAPI()

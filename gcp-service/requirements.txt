@@ -6,3 +6,5 @@ google-cloud-pubsub
 google-cloud-workflows
 sendgrid
 google-cloud-storage
+google-cloud-logging
+google-cloud-functions

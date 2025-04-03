@@ -8,6 +8,14 @@ main:
           body: ${event}
           headers:
             Content-Type: application/json
+        result: sms_result
+            
+    - log_sms_result:
+        call: sys.log
+        args:
+          text: ${"SMS Result: " + json.encode_to_string(sms_result.body)}
+          severity: "INFO"
+
     - send_email:
         call: http.post
         args:
@@ -15,3 +23,15 @@ main:
           body: ${event}
           headers:
             Content-Type: application/json
+        result: email_result
+            
+    - log_email_result:
+        call: sys.log
+        args:
+          text: ${"Email Result: " + json.encode_to_string(email_result.body)}
+          severity: "INFO"
+
+    - return_results:
+        return:
+          sms: ${sms_result.body}
+          email: ${email_result.body}

@@ -8,23 +8,47 @@ import json
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@functions_framework.cloud_event
-def send_sms(cloud_event):
+@functions_framework.http
+def send_sms(request):
     """
-    Cloud Function to send SMS messages via Pub/Sub.
+    Cloud Function to send SMS via Twilio (HTTP trigger)
+    Returns JSON response with operation details
     """
     try:
-        message = json.loads(cloud_event.data.decode('utf-8'))
-        logger.info(f"Received SMS message: {message}")
+        from twilio.rest import Client
+        
+        request_json = request.get_json(silent=True)
+        logger.info(f"SMS request data: {request.data}")
 
-        # Use Pub/Sub to send the SMS message
-        project_id = os.environ.get("GCP_PROJECT")
-        topic_id = "sms-topic"  # Replace with your Pub/Sub topic ID
+        if not request_json:
+            return {"status": "error", "message": "No JSON payload"}, 400
 
-        publisher = google.cloud.pubsub_v1.PublisherClient()
-        topic_path = publisher.topic_path(project_id, topic_id)
-        publisher.publish(topic_path, data=json.dumps(message).encode("utf-8"))
-        logger.info("SMS message published to Pub/Sub.")
+        # Twilio credentials from environment
+        account_sid = os.environ['TWILIO_ACCOUNT_SID']
+        auth_token = os.environ['TWILIO_AUTH_TOKEN']
+        from_number = os.environ['TWILIO_FROM_NUMBER']
+        to_number = os.environ['SMS_RECIPIENT']
+
+        client = Client(account_sid, auth_token)
+
+        message = client.messages.create(
+            body=f"Network Update: {json.dumps(request_json)}",
+            from_=from_number,
+            to=to_number
+        )
+
+        return {
+            "status": "success",
+            "service": "sms",
+            "message_sid": message.sid,
+            "status_code": 200,
+            "message": "SMS queued for delivery"
+        }, 200
 
     except Exception as e:
-        logger.error(f"Error sending SMS: {e}")
+        logger.error(f"SMS error: {str(e)}")
+        return {
+            "status": "error",
+            "service": "sms",
+            "message": str(e)
+        }, 500

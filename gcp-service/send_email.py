@@ -13,30 +13,39 @@ logger = logging.getLogger(__name__)
 def send_email(request):
     """
     Cloud Function to send emails via SendGrid (HTTP trigger)
+    Returns JSON response with operation details
     """
     try:
-        # Parse incoming request data
         request_json = request.get_json(silent=True)
-        logger.info(f"Raw request data: {request.data}")
-        logger.info(f"Parsed JSON: {request_json}")
+        logger.info(f"Email request data: {request.data}")
 
         if not request_json:
-            raise ValueError("No valid JSON payload received")
+            logger.error("No JSON payload received")
+            return {"status": "error", "message": "No JSON payload"}, 400
 
-        # Use SendGrid to send the email
         sg = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
         
         mail = Mail(
-            from_email=os.environ.get("SENDER_EMAIL", "m22aie218@iitj.ac.in"),
-            to_emails=os.environ.get("RECIPIENT_EMAIL", "esuvmul@gmail.com"),
-            subject="VCC Alert from GCP",
-            html_content=f"<strong>Network Configuration Update:</strong><br>{json.dumps(request_json, indent=2)}",
+            from_email=os.environ.get("SENDER_EMAIL"),
+            to_emails=os.environ.get("RECIPIENT_EMAIL"),
+            subject="VCC Alert",
+            html_content=f"<strong>Network Update:</strong><br>{json.dumps(request_json)}"
         )
         
         response = sg.send(mail)
-        logger.info(f"Email sent - Status: {response.status_code}, Headers: {response.headers}")
-        return f"Email sent successfully! Status: {response.status_code}", 200
+        logger.info(f"Email sent - Status: {response.status_code}")
+        
+        return {
+            "status": "success",
+            "service": "email",
+            "status_code": response.status_code,
+            "message": "Email queued for delivery"
+        }, 200
 
     except Exception as e:
-        logger.error(f"Error sending email: {str(e)}", exc_info=True)
-        return f"Error: {str(e)}", 500
+        logger.error(f"Email error: {str(e)}")
+        return {
+            "status": "error",
+            "service": "email",
+            "message": str(e)
+        }, 500

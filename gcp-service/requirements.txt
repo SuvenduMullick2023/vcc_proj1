@@ -8,3 +8,4 @@ sendgrid
 google-cloud-storage
 google-cloud-logging
 google-cloud-functions
+google.cloud.appengine_logging

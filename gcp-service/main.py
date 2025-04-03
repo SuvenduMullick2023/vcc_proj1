@@ -12,7 +12,7 @@ from google.cloud.workflows.executions_v1 import ExecutionsClient
 from google.cloud.workflows.executions_v1.types import Execution 
 from google.api_core.exceptions import GoogleAPICallError
 from google.cloud.logging_v2 import Client as LoggingClient
-from google.cloud import logging
+#from google.cloud import logging
 
 # Initialize logger early
 logging.basicConfig(level=logging.INFO)

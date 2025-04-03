@@ -26,8 +26,8 @@ def send_email(request):
         sg = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
         
         mail = Mail(
-            from_email=os.environ.get("SENDER_EMAIL"),
-            to_emails=os.environ.get("RECIPIENT_EMAIL"),
+            from_email="m22aie218@iitj.ac.in" #os.environ.get("SENDER_EMAIL"),
+            to_emails="esuvmul@gmail.com" #os.environ.get("RECIPIENT_EMAIL"),
             subject="VCC Alert",
             html_content=f"<strong>Network Update:</strong><br>{json.dumps(request_json)}"
         )

@@ -1,5 +1,0 @@
-fastapi
-uvicorn
-google-cloud-pubsub
-google-cloud-workflows
-sendgrid

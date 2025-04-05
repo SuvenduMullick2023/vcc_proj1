@@ -55,7 +55,7 @@ IMAGE_FAMILY = "ubuntu-2004-lts"  # Image family for Ubuntu 20.04 LTS
 def authenticate_gcloud():
     try:
         logger.info("Authenticating gcloud account...")
-        key_file = "/home/suvendu/VCC/VCC_m22aie218_assignment_1/project-1-autoscale-gcp-vm-e4be10f24915.json"  # Update with the actual path
+        key_file = "/home/suvendu/VCC/project-1-autoscale-gcp-vm-e4be10f24915.json"  # Update with the actual path
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file
         subprocess.run(["gcloud", "auth", "activate-service-account", "--key-file", key_file], check=True)
         subprocess.run(["gcloud", "config", "set", "project", "project-1-autoscale-gcp-vm"], check=True)

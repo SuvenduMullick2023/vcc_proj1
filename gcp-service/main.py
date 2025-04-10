@@ -7,7 +7,9 @@ from google.cloud import workflows_v1, logging_v2, functions_v1
 import logging
 import json
 import subprocess
-import send_email
+import functions.send_email
+import functions.send_sms
+
 from google.cloud.workflows.executions_v1 import ExecutionsClient
 from google.cloud.workflows.executions_v1.types import Execution 
 from google.api_core.exceptions import GoogleAPICallError

@@ -1,2 +1,2 @@
 functions-framework==3.*
-twilio>=8.0.0
+twilio

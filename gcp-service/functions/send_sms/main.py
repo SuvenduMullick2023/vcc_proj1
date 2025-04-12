@@ -1,58 +1,51 @@
 import functions_framework
 import os
-#import google.cloud.pubsub_v1
 import logging
-import json
-import os
 from twilio.rest import Client
-import functions_framework
-
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@functions_framework.http
-def send_sms(request):
+@functions_framework.cloud_event
+def send_sms(cloud_event):
     """
-    Cloud Function to send SMS via Twilio (HTTP trigger)
-    Returns JSON response with operation details
+    Cloud Function triggered by GCS upload events
+    Sends SMS with uploaded filename using Twilio
     """
     try:
-        from twilio.rest import Client
+        # Extract bucket metadata from CloudEvent
+        event_data = cloud_event.data
+        bucket_name = event_data.get("bucket")
+        filename = event_data.get("name")
         
-        request_json = request.get_json(silent=True)
-        logger.info(f"SMS request data: {request.data}")
+        if not filename:
+            logger.error("No filename found in event data")
+            return
 
-        if not request_json:
-            return {"status": "error", "message": "No JSON payload"}, 400
+        logger.info(f"New upload detected: {filename} in {bucket_name}")
 
-        # Twilio credentials from environment
+        # Get Twilio credentials from environment
         account_sid = os.environ['TWILIO_ACCOUNT_SID']
         auth_token = os.environ['TWILIO_AUTH_TOKEN']
         from_number = os.environ['TWILIO_FROM_NUMBER']
         to_number = os.environ['SMS_RECIPIENT']
 
+        # Create Twilio client
         client = Client(account_sid, auth_token)
 
+        # Create SMS message
         message = client.messages.create(
-            body=f"Network Update: {json.dumps(request_json)}",
+            body=f"New file uploaded: {filename}",
             from_=from_number,
             to=to_number
         )
 
-        return {
-            "status": "success",
-            "service": "sms",
-            "message_sid": message.sid,
-            "status_code": 200,
-            "message": "SMS queued for delivery"
-        }, 200
+        logger.info(f"SMS sent successfully! SID: {message.sid}")
+        return "SMS triggered successfully"
 
+    except KeyError as e:
+        logger.error(f"Missing environment variable: {str(e)}")
     except Exception as e:
-        logger.error(f"SMS error: {str(e)}")
-        return {
-            "status": "error",
-            "service": "sms",
-            "message": str(e)
-        }, 500
+        logger.error(f"Error processing SMS request: {str(e)}")
+        raise

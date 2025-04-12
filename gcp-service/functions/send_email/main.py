@@ -1,51 +1,30 @@
-import functions_framework
 import os
-import sendgrid
-from sendgrid.helpers.mail import Mail
-import logging
-import json
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from google.cloud import storage
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+def send_email(event, context):
+    # Fetch environment variables
+    sender_email = os.environ.get("EMAIL_SENDER")
+    sender_password = os.environ.get("EMAIL_PASSWORD")
+    recipient_email = os.environ.get("EMAIL_RECIPIENT")
 
-@functions_framework.http
-def send_email(request):
-    """
-    Cloud Function to send emails via SendGrid (HTTP trigger)
-    Returns JSON response with operation details
-    """
+    # Email content
+    subject = "File Uploaded to GCS Bucket"
+    body = f"A new file named '{event['name']}' was uploaded to bucket '{event['bucket']}'."
+
+    # Construct email
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = recipient_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "plain"))
+
     try:
-        request_json = request.get_json(silent=True)
-        logger.info(f"Email request data: {request.data}")
-
-        if not request_json:
-            logger.error("No JSON payload received")
-            return {"status": "error", "message": "No JSON payload"}, 400
-
-        sg = sendgrid.SendGridAPIClient(api_key=os.environ.get("SENDGRID_API_KEY"))
-        
-        mail = Mail(
-            from_email="m22aie218@iitj.ac.in" ,#os.environ.get("SENDER_EMAIL"),
-            to_emails="esuvmul@gmail.com", #os.environ.get("RECIPIENT_EMAIL"),
-            subject="VCC Alert",
-            html_content=f"<strong>Network Update:</strong><br>{json.dumps(request_json)}"
-        )
-        
-        response = sg.send(mail)
-        logger.info(f"Email sent - Status: {response.status_code}")
-        
-        return {
-            "status": "success",
-            "service": "email",
-            "status_code": response.status_code,
-            "message": "Email queued for delivery"
-        }, 200
-
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, recipient_email, message.as_string())
+        print("Email sent successfully.")
     except Exception as e:
-        logger.error(f"Email error: {str(e)}")
-        return {
-            "status": "error",
-            "service": "email",
-            "message": str(e)
-        }, 500
+        print(f"Failed to send email: {e}")

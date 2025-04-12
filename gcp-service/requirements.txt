@@ -1,8 +1,7 @@
-emails
-function_framework
+#emails
 fastapi
 uvicorn
-google-cloud-pubsub
+#google-cloud-pubsub
 google-cloud-workflows
 sendgrid
 google-cloud-storage
@@ -10,3 +9,5 @@ google-cloud-logging
 google-cloud-functions
 google.cloud.appengine_logging
 google.cloud
+functions-framework==3.*
+twilio

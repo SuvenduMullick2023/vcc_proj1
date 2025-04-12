@@ -9,43 +9,32 @@ logger = logging.getLogger(__name__)
 
 @functions_framework.cloud_event
 def send_sms(cloud_event):
-    """
-    Cloud Function triggered by GCS upload events
-    Sends SMS with uploaded filename using Twilio
-    """
+    """Triggered by Cloud Storage upload"""
     try:
-        # Extract bucket metadata from CloudEvent
-        event_data = cloud_event.data
-        bucket_name = event_data.get("bucket")
-        filename = event_data.get("name")
+        # Extract file metadata
+        data = cloud_event.data
+        file_name = data["name"]
+        bucket_name = data["bucket"]
         
-        if not filename:
-            logger.error("No filename found in event data")
-            return
+        logger.info(f"New upload: {file_name} in {bucket_name}")
 
-        logger.info(f"New upload detected: {filename} in {bucket_name}")
-
-        # Get Twilio credentials from environment
+        # Twilio credentials
         account_sid = os.environ['TWILIO_ACCOUNT_SID']
         auth_token = os.environ['TWILIO_AUTH_TOKEN']
         from_number = os.environ['TWILIO_FROM_NUMBER']
         to_number = os.environ['SMS_RECIPIENT']
 
-        # Create Twilio client
+        # Send SMS
         client = Client(account_sid, auth_token)
-
-        # Create SMS message
         message = client.messages.create(
-            body=f"New file uploaded: {filename}",
+            body=f"New file uploaded to GCP: {file_name}",
             from_=from_number,
             to=to_number
         )
 
-        logger.info(f"SMS sent successfully! SID: {message.sid}")
-        return "SMS triggered successfully"
+        logger.info(f"SMS sent! SID: {message.sid}")
+        return "Notification sent successfully"
 
-    except KeyError as e:
-        logger.error(f"Missing environment variable: {str(e)}")
     except Exception as e:
-        logger.error(f"Error processing SMS request: {str(e)}")
+        logger.error(f"Error: {str(e)}")
         raise

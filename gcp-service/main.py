@@ -380,6 +380,21 @@ if __name__ == "__main__":
         ]
     )
     
+    deploy_cloud_function(
+        name="send_sms_delete",
+        source_dir="functions/send_sms",
+        entry_point="send_sms",
+        trigger_event="google.storage.object.finalize",
+        trigger_resource="gcp-vcc-m22aie218-bucket-v1",
+        env_vars=[
+            f"TWILIO_ACCOUNT_SID={os.environ.get('TWILIO_ACCOUNT_SID')}",
+            f"TWILIO_AUTH_TOKEN={os.environ.get('TWILIO_AUTH_TOKEN')}",
+            f"TWILIO_FROM_NUMBER={os.environ.get('TWILIO_FROM_NUMBER')}",
+            f"SMS_RECIPIENT={os.environ.get('SMS_RECIPIENT')}"
+        ]
+    )
+    
+    
     
        
     

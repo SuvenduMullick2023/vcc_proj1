@@ -7,9 +7,11 @@ import functions_framework
 
 @functions_framework.cloud_event
 def send_email(cloud_event):
-    """Triggered by file upload to GCS"""
+    """Triggered by file upload or deletion in GCS"""
     try:
         data = cloud_event.data
+        event_type = cloud_event["type"]  # Check the type of event
+
         file_name = data.get("name", "N/A")
         bucket_name = data.get("bucket", "N/A")
         content_type = data.get("contentType", "N/A")
@@ -18,31 +20,42 @@ def send_email(cloud_event):
         updated = data.get("updated", "N/A")
         storage_class = data.get("storageClass", "N/A")
 
-        # Compose the email content
-        subject = "📁 File Uploaded to GCS Bucket"
-        body = (
-            f"A new file has been uploaded to GCS bucket '{bucket_name}'.\n\n"
-            f"🔹 Name: {file_name}\n"
-            f"🔹 Type: {content_type}\n"
-            f"🔹 Size: {size} bytes\n"
-            f"🔹 Created: {time_created}\n"
-            f"🔹 Updated: {updated}\n"
-            f"🔹 Storage Class: {storage_class}"
-        )
+        # Determine if it's an upload or delete event
+        if "finalize" in event_type:
+            subject = f"📁 File Uploaded to GCS: {file_name}"
+            body = (
+                f"A new file has been uploaded to GCS bucket '{bucket_name}'.\n\n"
+                f"🔹 Name: {file_name}\n"
+                f"🔹 Type: {content_type}\n"
+                f"🔹 Size: {size} bytes\n"
+                f"🔹 Created: {time_created}\n"
+                f"🔹 Updated: {updated}\n"
+                f"🔹 Storage Class: {storage_class}"
+            )
+        elif "delete" in event_type:
+            subject = f"🗑️ File Deleted from GCS: {file_name}"
+            body = (
+                f"A file has been deleted from GCS bucket '{bucket_name}'.\n\n"
+                f"🔹 Name: {file_name}\n"
+                f"🔹 Deletion Time: {updated}"
+            )
+        else:
+            subject = "📦 GCS File Change Notification"
+            body = f"A file change occurred in bucket '{bucket_name}': {file_name}"
 
-        # Environment variables
+        # Email credentials
         sender_email = os.environ.get("EMAIL_SENDER")
         sender_password = os.environ.get("EMAIL_PASSWORD")
         recipient_email = os.environ.get("EMAIL_RECIPIENT")
 
-        # Create email
+        # Compose the email
         message = MIMEMultipart()
         message["From"] = sender_email
         message["To"] = recipient_email
         message["Subject"] = subject
         message.attach(MIMEText(body, "plain"))
 
-        # Send email
+        # Send the email
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient_email, message.as_string())

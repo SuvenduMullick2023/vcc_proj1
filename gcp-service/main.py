@@ -130,7 +130,35 @@ def deploy_cloud_function(name, source_dir, entry_point, trigger_event, trigger_
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to deploy cloud function '{name}': {e}")
         raise HTTPException(status_code=500, detail=f"Function deploy failed: {str(e)}")
+
+
+def trigger_workflow(data: dict, project_id: str, workflow_id: str, location: str = "us-central1") -> str:
+    """
+    Triggers a Google Cloud Workflow with the given data input.
+    
+    Args:
+        data (dict): The input data to send to the workflow.
+        project_id (str): GCP project ID.
+        workflow_id (str): ID of the deployed Cloud Workflow.
+        location (str): Region of the workflow.
+
+    Returns:
+        str: Name of the triggered workflow execution.
+    """
+    try:
+        logger.info(f"Triggering workflow '{workflow_id}' with data: {data}")
+        client = ExecutionsClient()
+        parent = client.workflow_path(project_id, location, workflow_id)
+
+        execution = Execution(argument=json.dumps(data))
+        response = client.create_execution(parent=parent, execution=execution)
         
+        logger.info(f"Workflow execution started: {response.name}")
+        return response.name
+    except Exception as e:
+        logger.error(f"Workflow triggering failed: {e}")
+        raise
+            
 # Before running the FastAPI app:
 #create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1")  # Replace with a unique name        
         
@@ -277,7 +305,13 @@ if __name__ == "__main__":
     create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1", location="us-central1")
     deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflow.yaml", "us-central1")
     
-    '''deploy_cloud_function(
+    trigger_workflow(
+            data={"LTE": "L1800", "5G": "NR3600"},
+            project_id="gcp-vcc-m22aie218-bucket-v1",
+            workflow_id="m22aie218-vcc-v1",
+            location="us-central1"
+        )
+    deploy_cloud_function(
         name="send_sms",
         source_dir="functions/send_sms",
         entry_point="send_sms",
@@ -303,12 +337,11 @@ if __name__ == "__main__":
             f"EMAIL_PASSWORD={os.environ.get('EMAIL_PASSWORD')}",
             f"EMAIL_RECIPIENT={os.environ.get('EMAIL_RECIPIENT')}"
         ]
-    )'''
+    )
 
     
     #deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflows/workflow.yaml", "us-central1")
+       
     
-    
-    
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    #import uvicorn
+    #uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

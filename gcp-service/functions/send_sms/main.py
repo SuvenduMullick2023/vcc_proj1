@@ -16,8 +16,8 @@ def send_sms(cloud_event):
         content_type = data.get("contentType", "N/A")
         size = data.get("size", "N/A")
         time_created = data.get("timeCreated", "N/A")
-        updated = data.get("updated", "N/A")
-        storage_class = data.get("storageClass", "N/A")
+        #updated = data.get("updated", "N/A")
+        #storage_class = data.get("storageClass", "N/A")
 
         body = (
             f"📦 GCS Upload Alert\n"
@@ -26,8 +26,8 @@ def send_sms(cloud_event):
             f"Type: {content_type}\n"
             f"Size: {size} bytes\n"
             f"Created: {time_created}\n"
-            f"Updated: {updated}\n"
-            f"Storage: {storage_class}"
+            #f"Updated: {updated}\n"
+            #f"Storage: {storage_class}"
         )
 
         # Twilio credentials

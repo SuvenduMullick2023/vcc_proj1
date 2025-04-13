@@ -13,7 +13,7 @@ def send_sms(cloud_event):
     try:
         # Extract metadata
         data = cloud_event.data
-        event_type = cloud_event["ce_type"]  # e.g., google.storage.object.finalize or delete
+        event_type = event_type = cloud_event.get("type")  # e.g., google.storage.object.finalize or delete
         file_name = data.get("name", "N/A")
         bucket_name = data.get("bucket", "N/A")
         size = data.get("size", "N/A")

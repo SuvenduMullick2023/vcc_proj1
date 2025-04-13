@@ -343,5 +343,5 @@ if __name__ == "__main__":
     #deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflows/workflow.yaml", "us-central1")
        
     
-    #import uvicorn
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

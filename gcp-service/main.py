@@ -277,7 +277,7 @@ if __name__ == "__main__":
     create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1", location="us-central1")
     deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflow.yaml", "us-central1")
     
-    deploy_cloud_function(
+    '''deploy_cloud_function(
         name="send_sms",
         source_dir="functions/send_sms",
         entry_point="send_sms",
@@ -303,9 +303,9 @@ if __name__ == "__main__":
             f"EMAIL_PASSWORD={os.environ.get('EMAIL_PASSWORD')}",
             f"EMAIL_RECIPIENT={os.environ.get('EMAIL_RECIPIENT')}"
         ]
-    )
+    )'''
 
-    print("code change")
+    
     #deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflows/workflow.yaml", "us-central1")
     
     

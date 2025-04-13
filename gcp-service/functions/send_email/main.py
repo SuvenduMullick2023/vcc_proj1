@@ -11,9 +11,10 @@ def send_email(event, context):
 
     file_name = event['name']
     bucket_name = event['bucket']
-    is_deleted = 'timeDeleted' in event
 
-    if is_deleted:
+    # Determine event type
+    if 'timeDeleted' in event:
+        # File deletion event
         subject = "🗑️ File Deleted from GCS Bucket"
         body = f"""
         ⚠️ A file was deleted from your Google Cloud Storage bucket.
@@ -23,6 +24,7 @@ def send_email(event, context):
         🕒 Deletion Time: {event.get('timeDeleted')}
         """
     else:
+        # File upload or update event
         try:
             storage_client = storage.Client()
             bucket = storage_client.bucket(bucket_name)
@@ -58,7 +60,7 @@ def send_email(event, context):
             ⚠️ Error: {e}
             """
 
-    # Compose and send email
+    # Compose and send the email
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = recipient_email
@@ -72,4 +74,3 @@ def send_email(event, context):
         print("Email sent successfully.")
     except Exception as e:
         print(f"Failed to send email: {e}")
-

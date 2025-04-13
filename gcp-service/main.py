@@ -305,7 +305,7 @@ if __name__ == "__main__":
     create_bucket_if_not_exists("gcp-vcc-m22aie218-bucket-v1", location="us-central1")
     deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflow.yaml", "us-central1")
     
-    trigger_workflow(
+    '''trigger_workflow(
             data={"LTE": "L1800", "5G": "NR3600"},
             project_id="gcp-vcc-m22aie218-bucket-v1",
             workflow_id="m22aie218-vcc-v1",
@@ -337,11 +337,11 @@ if __name__ == "__main__":
             f"EMAIL_PASSWORD={os.environ.get('EMAIL_PASSWORD')}",
             f"EMAIL_RECIPIENT={os.environ.get('EMAIL_RECIPIENT')}"
         ]
-    )
+    )'''
 
     
     #deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflows/workflow.yaml", "us-central1")
        
     
     #import uvicorn
-    #uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

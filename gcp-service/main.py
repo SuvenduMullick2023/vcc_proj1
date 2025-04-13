@@ -118,7 +118,8 @@ def deploy_cloud_function(name, source_dir, entry_point, trigger_event, trigger_
             f"--entry-point={entry_point}",
             f"--trigger-event={trigger_event}",
             f"--trigger-resource={trigger_resource}",
-            "--allow-unauthenticated"
+            "--allow-unauthenticated",
+            "--service-account=222387947495-compute@developer.gserviceaccount.com"
         ]
 
         for var in env_vars:
@@ -310,7 +311,7 @@ if __name__ == "__main__":
             project_id="gcp-vcc-m22aie218-bucket-v1",
             workflow_id="m22aie218-vcc-v1",
             location="us-central1"
-        )
+        )'''
     deploy_cloud_function(
         name="send_sms",
         source_dir="functions/send_sms",
@@ -337,10 +338,10 @@ if __name__ == "__main__":
             f"EMAIL_PASSWORD={os.environ.get('EMAIL_PASSWORD')}",
             f"EMAIL_RECIPIENT={os.environ.get('EMAIL_RECIPIENT')}"
         ]
-    )'''
+    )
 
     
-    #deploy_workflow_if_not_exists("m22aie218-vcc-v1", "workflows/workflow.yaml", "us-central1")
+    
        
     
     import uvicorn

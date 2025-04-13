@@ -9,14 +9,34 @@ logger = logging.getLogger(__name__)
 
 @functions_framework.cloud_event
 def send_sms(cloud_event):
-    """Triggered by Cloud Storage upload"""
+    """Triggered by Cloud Storage object upload or deletion"""
     try:
-        # Extract file metadata
+        # Extract metadata
         data = cloud_event.data
-        file_name = data["name"]
-        bucket_name = data["bucket"]
-        
-        logger.info(f"New upload: {file_name} in {bucket_name}")
+        event_type = cloud_event["ce_type"]  # e.g., google.storage.object.finalize or delete
+        file_name = data.get("name", "N/A")
+        bucket_name = data.get("bucket", "N/A")
+        size = data.get("size", "N/A")
+        content_type = data.get("contentType", "N/A")
+        time_created = data.get("timeCreated", "N/A")
+        updated = data.get("updated", "N/A")
+        storage_class = data.get("storageClass", "N/A")
+
+        # Determine action type
+        action = "uploaded to" if "finalize" in event_type else "deleted from" if "delete" in event_type else "changed in"
+
+        logger.info(f"File {file_name} was {action} {bucket_name}")
+
+        # Compose SMS body
+        body = (
+            f"GCS Alert: File {action} {bucket_name}\n"
+            f"Name: {file_name}\n"
+            f"Type: {content_type}\n"
+            f"Size: {size} bytes\n"
+            f"Created: {time_created}\n"
+            f"Updated: {updated}\n"
+            f"Storage: {storage_class}"
+        )
 
         # Twilio credentials
         account_sid = os.environ['TWILIO_ACCOUNT_SID']
@@ -27,7 +47,7 @@ def send_sms(cloud_event):
         # Send SMS
         client = Client(account_sid, auth_token)
         message = client.messages.create(
-            body=f"New file uploaded to GCP: {file_name}",
+            body=body,
             from_=from_number,
             to=to_number
         )

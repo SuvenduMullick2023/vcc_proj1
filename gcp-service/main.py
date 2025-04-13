@@ -131,6 +131,33 @@ def deploy_cloud_function(name, source_dir, entry_point, trigger_event, trigger_
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to deploy cloud function '{name}': {e}")
         raise HTTPException(status_code=500, detail=f"Function deploy failed: {str(e)}")
+    
+def deploy_cloud_function__deletion_update(name, source_dir, entry_point, trigger_event, trigger_resource, env_vars):
+    try:
+        logging.info(f"Deploying function '{name}'...")
+
+        cmd = [
+            "gcloud", "functions", "deploy", name,
+            "--gen2",
+            "--runtime=python310",
+            "--region=us-central1",
+            f"--source={source_dir}",
+            f"--entry-point={entry_point}",
+            f"--trigger-event={trigger_event}",
+            f"--trigger-resource={trigger_resource}",
+            "--allow-unauthenticated",
+            "--service-account=222387947495-compute@developer.gserviceaccount.com"
+        ]
+
+        for var in env_vars:
+            cmd.append("--set-env-vars")
+            cmd.append(var)
+
+        subprocess.run(cmd, check=True)
+        logging.info(f"Function '{name}' deployed successfully.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to deploy cloud function '{name}': {e}")
+        raise HTTPException(status_code=500, detail=f"Function deploy failed: {str(e)}")    
 
 
 def trigger_workflow(data: dict, project_id: str, workflow_id: str, location: str = "us-central1") -> str:
@@ -340,6 +367,18 @@ if __name__ == "__main__":
         ]
     )
 
+    deploy_cloud_function(
+        name="send_email_delete",
+        source_dir="functions/send_email",
+        entry_point="send_email",
+        trigger_event="google.storage.object.delete",
+        trigger_resource="gcp-vcc-m22aie218-bucket-v1",
+        env_vars=[
+            f"EMAIL_SENDER={os.environ.get('EMAIL_SENDER')}",
+            f"EMAIL_PASSWORD={os.environ.get('EMAIL_PASSWORD')}",
+            f"EMAIL_RECIPIENT={os.environ.get('EMAIL_RECIPIENT')}"
+        ]
+    )
     
     
        

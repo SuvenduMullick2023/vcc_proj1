@@ -3,12 +3,10 @@ import logging
 from twilio.rest import Client
 import functions_framework
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 
 @functions_framework.cloud_event
 def send_sms(cloud_event):
-    """Triggered by file upload or deletion in GCS"""
     try:
         data = cloud_event.data
         event_type = cloud_event["type"]
@@ -19,7 +17,7 @@ def send_sms(cloud_event):
         time_created = data.get("timeCreated", "N/A")
         updated = data.get("updated", "N/A")
 
-        # Determine if it's an upload or delete event
+        # Determine event
         if "finalize" in event_type:
             body = (
                 f"[UPLOAD] {file_name} in {bucket_name}\n"
@@ -37,10 +35,10 @@ def send_sms(cloud_event):
             )
 
         # Twilio credentials
-        account_sid = os.environ['TWILIO_ACCOUNT_SID']
-        auth_token = os.environ['TWILIO_AUTH_TOKEN']
-        from_number = os.environ['TWILIO_FROM_NUMBER']
-        to_number = os.environ['SMS_RECIPIENT']
+        account_sid = "<account_id>"
+        auth_token = "<auth_token>"
+        from_number = "<from_number>"
+        to_number = "<recipient_number>"
 
         # Send SMS
         client = Client(account_sid, auth_token)
@@ -50,6 +48,6 @@ def send_sms(cloud_event):
             to=to_number
         )
 
-        logging.info(f"✅ SMS sent! SID: {message.sid}")
+        logging.info(f"SMS sent! SID: {message.sid}")
     except Exception as e:
-        logging.error(f"❌ Failed to send SMS: {str(e)}")
+        logging.error(f"Failed to send SMS: {str(e)}")

@@ -1,5 +1,6 @@
-# vcc_proj1
-# GCP Service Deployment Instructions
+# vcc_proj1 - Serverless email/SMS Application
+
+# Instructions for GCP Service Deployment/Resource creation using Google Cloud UI.
 
 ## Prerequisites
 
@@ -52,6 +53,12 @@
     
     ![image](https://github.com/user-attachments/assets/69e42d95-f7ef-44a1-b7e3-43070e68bb22)
 
+6.  **Grant Permissions**
+
+    Provide following permissions to our default user running application workflow:
+
+    ![image](https://github.com/user-attachments/assets/d571fe37-76c5-429b-b6a8-bab594af883d)
+   
 6.  **Deploy Cloud Workflow:**
 
     ```bash

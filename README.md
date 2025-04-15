@@ -12,6 +12,7 @@
 ## Assumption
 
 1. Files are uploaded to source buckets by a client application.
+2. File containing **_eu** in name is considered from EU regions and all other files would be considered from non-EU region.
 
 ## Setup
 

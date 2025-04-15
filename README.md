@@ -2,6 +2,9 @@
 
 # Instructions for GCP Service Deployment/Resource creation using Google Cloud UI.
 
+## Demo Recording
+https://drive.google.com/file/d/1oAh01_te1oSR4E3T9iNA_ngCuBoscHaF/view
+
 ## Prerequisites
 
 1.  Google Cloud SDK (gcloud CLI) installed and configured.
